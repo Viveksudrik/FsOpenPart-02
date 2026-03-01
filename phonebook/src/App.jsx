@@ -35,23 +35,24 @@ const App = () => {
                     .update(existingPerson.id, changedPerson)
                     .then(returnedPerson => {
                         setPersons(persons.map(person => person.id !== existingPerson.id ? person : returnedPerson))
-                        setSuccessMessage(
-                            `Added ${returnedPerson.name}`
-                        )
-                        setTimeout(() => {
-                            setSuccessMessage(null)
-                        }, 5000)
+                        setSuccessMessage(`Updated ${returnedPerson.name}`)
+                        setTimeout(() => setSuccessMessage(null), 5000)
                         setNewName('')
                         setNewNumber('')
                     })
-                    .catch(error => { // Exercise 2.17
-                        setErrorMessage(
-                            `Information of ${existingPerson.name} has already been removed from server`
-                        )
-                        setTimeout(() => {
-                            setErrorMessage(null)
-                        }, 5000)
-                        setPersons(persons.filter(p => p.id !== existingPerson.id))
+                    .catch(error => {
+                        if (error.response?.status === 404) {
+                            setErrorMessage(`Information of ${existingPerson.name} has already been removed from server`)
+                        } else {
+                            // 3.19/3.20: Validation error on update
+                            const msg = error.response?.data?.error || 'Something went wrong'
+                            console.log('Validation error on update:', msg)
+                            setErrorMessage(msg)
+                        }
+                        setTimeout(() => setErrorMessage(null), 5000)
+                        if (error.response?.status === 404) {
+                            setPersons(persons.filter(p => p.id !== existingPerson.id))
+                        }
                     })
             }
             return
@@ -66,14 +67,17 @@ const App = () => {
             .create(personObject)
             .then(returnedPerson => {
                 setPersons(persons.concat(returnedPerson))
-                setSuccessMessage(
-                    `Added ${returnedPerson.name}`
-                )
-                setTimeout(() => {
-                    setSuccessMessage(null)
-                }, 5000)
+                setSuccessMessage(`Added ${returnedPerson.name}`)
+                setTimeout(() => setSuccessMessage(null), 5000)
                 setNewName('')
                 setNewNumber('')
+            })
+            .catch(error => {
+                // 3.19/3.20: Show Mongoose validation errors from backend
+                const msg = error.response?.data?.error || 'Something went wrong'
+                console.log('Validation error:', msg)
+                setErrorMessage(msg)
+                setTimeout(() => setErrorMessage(null), 5000)
             })
     }
 
